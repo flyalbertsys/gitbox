@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>日常清单 · Todo List</title>
+    <style>
+      :root {
+        --ink: #1e2540;
+        --muted: #8a91a9;
+        --line: #eceef5;
+        --accent: #6c63ff;
+        --accent-dark: #5149dd;
+        --mint: #e9fbf5;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+        background: #f7f8ff;
+        background-image: radial-gradient(circle at 10% 12%, #ddd8ff 0, transparent 24rem), radial-gradient(circle at 91% 86%, #c9f5e9 0, transparent 24rem);
+      }
+
+      .app { width: min(94%, 720px); margin: 72px auto; }
+      .hero { display: flex; justify-content: space-between; align-items: end; margin-bottom: 28px; }
+      .eyebrow { margin: 0 0 8px; color: var(--accent); font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+      h1 { margin: 0; font-size: clamp(2.1rem, 6vw, 3.35rem); letter-spacing: -.06em; line-height: 1; }
+      .date { margin: 0 0 4px; color: var(--muted); font-size: .9rem; text-align: right; }
+
+      .card { overflow: hidden; border: 1px solid rgba(255,255,255,.8); border-radius: 24px; background: rgba(255,255,255,.9); box-shadow: 0 20px 60px rgba(67, 61, 125, .12); backdrop-filter: blur(10px); }
+      form { display: flex; gap: 10px; padding: 22px; border-bottom: 1px solid var(--line); }
+      input { min-width: 0; flex: 1; border: 1px solid var(--line); border-radius: 12px; padding: 13px 14px; color: var(--ink); font: inherit; outline: none; transition: border-color .2s, box-shadow .2s; }
+      input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px #6c63ff18; }
+      button { border: 0; border-radius: 12px; cursor: pointer; font: inherit; font-weight: 700; transition: transform .18s, background .18s, opacity .18s; }
+      button:hover { transform: translateY(-1px); }
+      .add { padding: 0 18px; color: white; background: var(--accent); }
+      .add:hover { background: var(--accent-dark); }
+
+      .toolbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 22px 8px; }
+      .count { color: var(--muted); font-size: .88rem; }
+      .filters { display: flex; gap: 5px; }
+      .filter { padding: 7px 10px; color: var(--muted); background: transparent; font-size: .82rem; }
+      .filter.active { color: var(--accent); background: #f0efff; }
+
+      ul { min-height: 232px; margin: 0; padding: 8px 14px 14px; list-style: none; }
+      .task { display: flex; align-items: center; gap: 13px; margin: 4px 0; padding: 13px 9px; border-radius: 14px; animation: enter .25s ease-out; }
+      .task:hover { background: #fafaff; }
+      .check { appearance: none; width: 21px; height: 21px; flex: 0 0 auto; margin: 0; border: 2px solid #ccd0e1; border-radius: 7px; cursor: pointer; transition: .18s; }
+      .check:checked { border-color: var(--accent); background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' d='m5 12 4 4L19 6'/%3E%3C/svg%3E") center/15px no-repeat; }
+      .task-text { flex: 1; overflow-wrap: anywhere; font-size: .98rem; font-weight: 600; }
+      .done .task-text { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 2px; }
+      .delete { width: 31px; height: 31px; color: #b0b5c8; background: transparent; font-size: 1.25rem; line-height: 1; }
+      .delete:hover { color: #ed5c72; background: #fff0f3; }
+      .empty { display: grid; min-height: 210px; place-items: center; color: var(--muted); text-align: center; font-size: .92rem; }
+      .empty span { display: block; margin-bottom: 9px; font-size: 2rem; }
+
+      .footer { display: flex; justify-content: space-between; align-items: center; padding: 13px 22px 18px; border-top: 1px solid var(--line); }
+      .hint { color: var(--muted); font-size: .78rem; }
+      .clear { padding: 7px 9px; color: var(--muted); background: transparent; font-size: .8rem; }
+      .clear:hover { color: #ed5c72; background: #fff0f3; }
+      @keyframes enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+      @media (max-width: 520px) { .app { margin: 38px auto; } .hero { align-items: start; flex-direction: column; gap: 14px; } .date { text-align: left; } form { padding: 15px; } .toolbar { padding: 13px 15px 7px; } .filters { gap: 0; } }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header class="hero">
+        <div><p class="eyebrow">Simple &amp; focused</p><h1>日常清单</h1></div>
+        <p class="date" id="date"></p>
+      </header>
+      <section class="card" aria-label="待办事项">
+        <form id="task-form"><input id="task-input" aria-label="新待办事项" maxlength="120" placeholder="准备完成什么？" autocomplete="off" /><button class="add" type="submit">添加</button></form>
+        <div class="toolbar"><span class="count" id="count"></span><div class="filters" aria-label="任务筛选"><button class="filter active" data-filter="all">全部</button><button class="filter" data-filter="active">进行中</button><button class="filter" data-filter="done">已完成</button></div></div>
+        <ul id="list"></ul>
+        <footer class="footer"><span class="hint">所有变更都会保存在此浏览器中</span><button class="clear" id="clear-done">清除已完成</button></footer>
+      </section>
+    </main>
+    <script>
+      const storageKey = 'daily-todos-v1';
+      let todos = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      let filter = 'all';
+      const list = document.querySelector('#list');
+      const count = document.querySelector('#count');
+      const input = document.querySelector('#task-input');
+
+      document.querySelector('#date').textContent = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(new Date());
+      const save = () => localStorage.setItem(storageKey, JSON.stringify(todos));
+      const visibleTodos = () => todos.filter(todo => filter === 'all' || filter === 'done' ? filter === 'all' || todo.done : !todo.done);
+      const escapeHTML = text => text.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char]);
+
+      function render() {
+        const remaining = todos.filter(todo => !todo.done).length;
+        count.textContent = remaining ? `还有 ${remaining} 项待完成` : '全部完成，做得好！';
+        const shown = visibleTodos();
+        list.innerHTML = shown.length ? shown.map(todo => `<li class="task ${todo.done ? 'done' : ''}"><input class="check" type="checkbox" data-toggle="${todo.id}" ${todo.done ? 'checked' : ''} aria-label="完成任务"><span class="task-text">${escapeHTML(todo.text)}</span><button class="delete" data-delete="${todo.id}" aria-label="删除任务">×</button></li>`).join('') : `<li class="empty"><div><span>✦</span>${filter === 'all' ? '清单空空的，添加第一项吧。' : '这里暂时没有任务。'}</div></li>`;
+      }
+
+      document.querySelector('#task-form').addEventListener('submit', event => {
+        event.preventDefault();
+        const text = input.value.trim();
+        if (!text) return input.focus();
+        todos.unshift({ id: crypto.randomUUID(), text, done: false });
+        input.value = ''; save(); render(); input.focus();
+      });
+      list.addEventListener('change', event => { const id = event.target.dataset.toggle; if (id) { todos = todos.map(todo => todo.id === id ? { ...todo, done: event.target.checked } : todo); save(); render(); } });
+      list.addEventListener('click', event => { const id = event.target.dataset.delete; if (id) { todos = todos.filter(todo => todo.id !== id); save(); render(); } });
+      document.querySelector('.filters').addEventListener('click', event => { const button = event.target.closest('[data-filter]'); if (!button) return; filter = button.dataset.filter; document.querySelectorAll('.filter').forEach(item => item.classList.toggle('active', item === button)); render(); });
+      document.querySelector('#clear-done').addEventListener('click', () => { todos = todos.filter(todo => !todo.done); save(); render(); });
+      render();
+    </script>
+  </body>
+</html>
